@@ -1,4 +1,4 @@
-name: Build Web App
+name: Build App
 
 on: [push]
 
@@ -9,19 +9,32 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
+    # Fix 1: Verify and extract ZIP properly
+    - name: Unzip source
+      run: |
+        if [ -f "yourfile.zip" ]; then
+          unzip -o yourfile.zip -d app_source
+        else
+          echo "ZIP file missing!" && exit 1
+        fi
 
-    - name: Install dependencies
-      run: npm install
+    # Fix 2: Ensure execute permissions
+    - name: Set permissions
+      run: |
+        cd app_source
+        chmod +x gradlew  # For Android
+        chmod +x ./scripts/*.sh  # For custom scripts
 
-    - name: Build project
-      run: npm run build
+    # Fix 3: Use absolute paths for critical commands
+    - name: Build
+      run: |
+        cd app_source
+        /usr/bin/env bash ./gradlew assembleDebug  # Android
+        # OR for Node: /usr/bin/npm install
 
-    - name: Upload build
-      uses: actions/upload-artifact@v4
-      with:
-        name: web-build
-        path: build/  # React/Vue output folder
+    # Debug: List files to verify paths
+    - name: Debug files
+      run: |
+        cd app_source
+        ls -la
+        pwd
